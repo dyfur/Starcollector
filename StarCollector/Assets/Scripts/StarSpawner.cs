@@ -1,15 +1,19 @@
+
 using UnityEngine;
 
 public class StarSpawner : MonoBehaviour
 {
+    [Header("Star Prefabs")]
     public GameObject starPrefab;
     public GameObject blueStarPrefab;
     public GameObject purpleStarPrefab;
 
+    [Header("Planet Prefabs")]
     public GameObject marsPrefab;
     public GameObject venusPrefab;
     public GameObject neptunePrefab;
 
+    [Header("Spawn Settings")]
     public float spawnRate = 1f;
     public float starSpeed = 1f;
 
@@ -17,8 +21,15 @@ public class StarSpawner : MonoBehaviour
 
     public int currentLevel = 1;
 
+    // Stops the game from spawning more objects
+    public bool gameEnded = false;
+
     void Update()
     {
+        // Stop spawning when the game ends
+        if (gameEnded)
+            return;
+
         timer += Time.deltaTime;
 
         if (timer >= spawnRate)
@@ -30,12 +41,12 @@ public class StarSpawner : MonoBehaviour
 
     void SpawnStar()
     {
-        // Portrait scherm -> kleiner speelgebied
         float randomX = Random.Range(-1.8f, 1.8f);
 
-        Vector3 spawnPosition = new Vector3(randomX, 6f, 0);
+        Vector3 spawnPosition =
+            new Vector3(randomX, 6f, 0);
 
-        GameObject objectToSpawn;
+        GameObject objectToSpawn = null;
 
         // LEVEL 1
         if (currentLevel == 1)
@@ -75,10 +86,23 @@ public class StarSpawner : MonoBehaviour
             }
         }
 
-        GameObject spawnedObject =
-            Instantiate(objectToSpawn, spawnPosition, Quaternion.identity);
+        if (objectToSpawn == null)
+            return;
 
-        spawnedObject.GetComponent<StarFall>().fallSpeed = starSpeed;
+        GameObject spawnedObject =
+            Instantiate(
+                objectToSpawn,
+                spawnPosition,
+                Quaternion.identity
+            );
+
+        StarFall fallingObject =
+            spawnedObject.GetComponent<StarFall>();
+
+        if (fallingObject != null)
+        {
+            fallingObject.fallSpeed = starSpeed;
+        }
     }
 
     public void SetLevel2()
@@ -91,5 +115,22 @@ public class StarSpawner : MonoBehaviour
     {
         currentLevel = 3;
         starSpeed = 6f;
+    }
+
+    // Call this when the player wins or loses
+    public void StopSpawning()
+    {
+        gameEnded = true;
+
+        // Find and remove all falling stars and planets
+        StarFall[] fallingObjects =
+            FindObjectsByType<StarFall>(
+                FindObjectsSortMode.None
+            );
+
+        foreach (StarFall fallingObject in fallingObjects)
+        {
+            Destroy(fallingObject.gameObject);
+        }
     }
 }
