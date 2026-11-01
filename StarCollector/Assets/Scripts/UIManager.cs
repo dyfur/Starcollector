@@ -35,25 +35,42 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        gameUI.SetActive(true);
-        winPanel.SetActive(false);
-        gameOverPanel.SetActive(false);
-        leaderboardPanel.SetActive(false);
+        // Show gameplay UI
+        if (gameUI != null)
+            gameUI.SetActive(true);
+
+        // Hide end screens
+        if (winPanel != null)
+            winPanel.SetActive(false);
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        // Hide leaderboard at the beginning
+        if (leaderboardPanel != null)
+            leaderboardPanel.SetActive(false);
+
+        // Show gameplay objects
+        if (gameplayObjects != null)
+            gameplayObjects.SetActive(true);
     }
 
     public void UpdateScore(int score)
     {
-        scoreText.text = score + "/30";
+        if (scoreText != null)
+            scoreText.text = score + "/30";
     }
 
     public void UpdateLives(int lives)
     {
-        livesText.text = "Lives: " + lives;
+        if (livesText != null)
+            livesText.text = "Lives: " + lives;
     }
 
     public void UpdateLevel(int level)
     {
-        levelText.text = "Level: " + level;
+        if (levelText != null)
+            levelText.text = "Level: " + level;
     }
 
     public void ShowGameOver()
@@ -74,22 +91,33 @@ public class UIManager : MonoBehaviour
 
     private void ShowEndScreen(bool won)
     {
-        gameUI.SetActive(false);
+        // Hide gameplay UI
+        if (gameUI != null)
+            gameUI.SetActive(false);
 
+        // Stop gameplay objects
         if (gameplayObjects != null)
             gameplayObjects.SetActive(false);
 
+        // Stop spawning
         StarSpawner spawner =
             FindFirstObjectByType<StarSpawner>();
 
         if (spawner != null)
             spawner.StopSpawning();
 
-        leaderboardPanel.SetActive(true);
+        // Show leaderboard panel
+        if (leaderboardPanel != null)
+            leaderboardPanel.SetActive(true);
 
-        winPanel.SetActive(won);
-        gameOverPanel.SetActive(!won);
+        // Show correct end screen
+        if (winPanel != null)
+            winPanel.SetActive(won);
 
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(!won);
+
+        // Display final score
         int finalScore = ScoreManager.Instance.score;
 
         if (won && winFinalScoreText != null)

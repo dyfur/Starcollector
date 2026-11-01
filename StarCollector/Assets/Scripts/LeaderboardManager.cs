@@ -9,6 +9,7 @@ public class LeaderboardManager : MonoBehaviour
     [Header("Leaderboard UI")]
     public TMP_InputField playerNameInput;
     public TextMeshProUGUI leaderboardText;
+    public GameObject leaderboardPanel;
 
     private const string SaveKey = "Leaderboard";
 
@@ -45,9 +46,15 @@ public class LeaderboardManager : MonoBehaviour
             return;
         }
 
-        if (playerNameInput == null || leaderboardText == null)
+        if (playerNameInput == null)
         {
-            Debug.LogError("Leaderboard UI is not connected!");
+            Debug.LogError("PlayerNameInput is not connected!");
+            return;
+        }
+
+        if (leaderboardText == null)
+        {
+            Debug.LogError("LeaderboardText is not connected!");
             return;
         }
 
@@ -57,6 +64,7 @@ public class LeaderboardManager : MonoBehaviour
             return;
         }
 
+        // Get player name
         string playerName = playerNameInput.text.Trim();
 
         if (string.IsNullOrEmpty(playerName))
@@ -64,8 +72,16 @@ public class LeaderboardManager : MonoBehaviour
             playerName = "Player";
         }
 
+        // Limit name to 12 characters
+        if (playerName.Length > 12)
+        {
+            playerName = playerName.Substring(0, 12);
+        }
+
+        // Get final score
         int playerScore = ScoreManager.Instance.score;
 
+        // Create leaderboard entry
         ScoreEntry newEntry = new ScoreEntry
         {
             playerName = playerName,
@@ -74,9 +90,11 @@ public class LeaderboardManager : MonoBehaviour
 
         leaderboard.entries.Add(newEntry);
 
+        // Sort highest score first
         leaderboard.entries.Sort((a, b) =>
             b.score.CompareTo(a.score));
 
+        // Keep only top 5
         if (leaderboard.entries.Count > 5)
         {
             leaderboard.entries.RemoveRange(
@@ -85,9 +103,19 @@ public class LeaderboardManager : MonoBehaviour
             );
         }
 
+        // Save leaderboard
         SaveScores();
+
+        // Show leaderboard panel
+        if (leaderboardPanel != null)
+        {
+            leaderboardPanel.SetActive(true);
+        }
+
+        // Update displayed scores
         UpdateLeaderboard();
 
+        // Prevent duplicate submission
         scoreSubmitted = true;
 
         playerNameInput.interactable = false;
@@ -102,6 +130,8 @@ public class LeaderboardManager : MonoBehaviour
 
         PlayerPrefs.SetString(SaveKey, json);
         PlayerPrefs.Save();
+
+        Debug.Log("Leaderboard saved successfully!");
     }
 
     private void LoadScores()
@@ -114,7 +144,20 @@ public class LeaderboardManager : MonoBehaviour
                 JsonUtility.FromJson<ScoreList>(json);
 
             if (loadedList != null)
+            {
                 leaderboard = loadedList;
+
+                if (leaderboard.entries == null)
+                {
+                    leaderboard.entries = new List<ScoreEntry>();
+                }
+            }
+
+            Debug.Log("Leaderboard loaded!");
+        }
+        else
+        {
+            Debug.Log("No saved leaderboard found.");
         }
     }
 
@@ -126,8 +169,7 @@ public class LeaderboardManager : MonoBehaviour
             return;
         }
 
-        leaderboardText.gameObject.SetActive(true);
-
+        // Build leaderboard text
         string displayText = "HIGH SCORES\n\n";
 
         for (int i = 0; i < leaderboard.entries.Count; i++)
@@ -148,5 +190,21 @@ public class LeaderboardManager : MonoBehaviour
         leaderboardText.text = displayText;
 
         Debug.Log("Leaderboard updated!");
+        Debug.Log("Leaderboard text: " + leaderboardText.text);
+        Debug.Log("Leaderboard active: " +
+                  leaderboardText.gameObject.activeInHierarchy);
+    }
+
+    // Use this ONCE to delete old test scores
+    public void ClearLeaderboard()
+    {
+        PlayerPrefs.DeleteKey(SaveKey);
+
+        leaderboard.entries.Clear();
+
+        SaveScores();
+        UpdateLeaderboard();
+
+        Debug.Log("Old leaderboard scores deleted!");
     }
 }
